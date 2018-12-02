@@ -1,5 +1,9 @@
-// This script is made to work on Google Apps Script Editor.
-// It uses JS ES5
+///
+/* @Author: Alexander P. Cerutti
+ * @Description: This script is made to work on Google Apps Script Editor.
+ * It uses JS ES5
+ */
+///
 
 var activeSS = SpreadsheetApp.getActive();
 
