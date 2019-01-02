@@ -37,9 +37,11 @@ var Colors = {
 function onOpen() {
 	var actualMonth = getMonthName();
 
-	/** DEVELOPMENT ONLY **/
-	//activeSS.deleteSheet(activeSS.getSheetByName(actualMonth));
-	/** DEVELOPMENT ONLY **/
+    if (activeSS.getSheetByName(actualMonth) !== null) {
+      	/** DEVELOPMENT ONLY - DISABLE FOR PRODUCTION **/
+        //activeSS.deleteSheet(activeSS.getSheetByName(actualMonth));
+        /** DEVELOPMENT ONLY **/
+    }
 
 	// Checking if there is a Sheet with name corresponding to the
 	// one associated with this month name
@@ -87,6 +89,7 @@ function onOpen() {
 
 		var footerRowRange;
 		var footerRowNumber;
+
 		if (activeSS.getSheets().length == 1) {
 			footerRowNumber = 5;
 			footerRowRange = "A" + footerRowNumber + ":Z" + footerRowNumber;
@@ -130,7 +133,7 @@ function onOpen() {
 		activeSheet.setRowHeight(footerRowNumber, 7);
 
 		activeSheet.getRange("B2:B6").setNumberFormat("€ ##0.00##")
-	}
+    }
 }
 
 /**
@@ -159,15 +162,46 @@ function getPreviousMonthTotalRange() {
 
 	var activeSheet = activeSS.getSheetByName(previousName);
 	var maxRows = activeSheet.getLastRow();
-	var result = "'" + previousName + "'!" + activeSheet.getRange(maxRows, 2).getA1Notation();
-	return result;
+
+    // e.g. 'December 2018'!B61+B4
+	return "'" + previousName + "'!" + activeSheet.getRange(maxRows, 2).getA1Notation();
 }
 
-function getMonthName(override) {
-	var month = LocalizedStrings.monthsFull[(new Date()).getMonth() + (override || 0)];
-	var year = (new Date()).getFullYear();
+/**
+ * Retrieves the current month or the one based on position (backward, negative)
+ * @function getMonthName
+ * @param {number} position -
+ */
 
-	return month + " " + year;
+function getMonthName(position) {
+    position = position || (new Date()).getMonth();
+    var parsedPosition;
+    var month;
+    var year;
+
+    // into the months limits
+    if (position < 0) {
+      parsedPosition = LocalizedStrings.monthsFull.length + position;
+      // we need to set the year based on this month index + position (neg. num).
+      // If < 0, we are referring to a previous year month
+      year = (new Date().getMonth() + position) < 0 ? (new Date()).getFullYear() - 1 : (new Date()).getFullYear();
+    } else {
+      // position might be > 11. We want to sanitize it.
+      // if it is greater than 11, we calculate the amount of times
+      // it fits in it, so we can navigate through years
+      parsedPosition = position % 11;
+      var yearsForward = 0;
+
+      while (position >= LocalizedStrings.monthsFull.length) {
+        position = position - LocalizedStrings.monthsFull.length;
+        yearsForward++;
+      }
+
+      year = (new Date()).getFullYear() + yearsForward;
+    }
+
+    month = LocalizedStrings.monthsFull[parsedPosition];
+    return month + " " + year;
 }
 
 /**
