@@ -7,9 +7,27 @@
 
 var activeSS = SpreadsheetApp.getActive();
 
+//////////////////////////
+// ***** SETTINGS ***** //
+//////////////////////////
+
+var settings = {
+	// if true, a new sheet will be created every new month
+	trackMonthly: true,
+	// if true, every sheet following the first, will have
+	// the row which will count the current month total
+	// with the past month one.
+	// Real value will be calculated if this and trackMonthly
+	// will be true
+	pastMonthTotal: true,
+	excludeSheets: [], // strings,
+	fourthColumnDefaultValue: "-"
+};
+
 var LocalizedStrings = {
 	monthsFull: ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"],
 	monthsShort: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+	// Expense Name, Cost Amount, Date, Notes
 	columnsName: ["Nome", "Costo", "Data", "Note"],
 	totalDescriptor: "Totale mese",
 	totalWithPastMonthsDescriptor: "Tot. con mesi precedenti",
@@ -26,7 +44,23 @@ var Colors = {
 	totalSeparatorText: "#FFF",
 };
 
+//////////////////////////
+// *** END SETTINGS *** //
+//////////////////////////
+
+///////////////////////////////////////////
+
+/////////////////////////////////
+// *** DO NOT TOUCH BELOW^1 *** //
+/////////////////////////////////
+
+// ^1: if you want to use it as is.
+
+//////////////////////////////////////////
+
 /*  Events */
+
+settings.pastMonthTotal = settings.pastMonthTotal && settings.trackMonthly;
 
 /**
  * Google Sheet event onOpen
@@ -35,105 +69,107 @@ var Colors = {
  */
 
 function onOpen() {
-	var actualMonth = getMonthName();
+	if (settings.trackMonthly) {
+		var actualMonth = getMonthName();
 
-    if (activeSS.getSheetByName(actualMonth) !== null) {
-      	/** DEVELOPMENT ONLY - DISABLE FOR PRODUCTION **/
-        //activeSS.deleteSheet(activeSS.getSheetByName(actualMonth));
-        /** DEVELOPMENT ONLY **/
-    }
-
-	// Checking if there is a Sheet with name corresponding to the
-	// one associated with this month name
-
-	if (activeSS.getSheetByName(actualMonth) === null) {
-		activeSS.insertSheet(actualMonth, activeSS.getNumSheets());
-		var activeSheet = activeSS.getSheetByName(actualMonth);
-
-		// Setting cells
-		activeSheet.setRowHeight(1, 35);
-		activeSheet.setColumnWidths(1, 3, 185);
-		activeSheet.setColumnWidth(4, 200);
-
-		// ADColumns and Rows is the header row A-D
-		// headerRow is the header row A-Z
-
-		var ADcolumns = activeSheet.getRange("A:D");
-		var ADrows = activeSheet.getRange("A1:D1");
-		var headerRow = activeSheet.getRange("A1:Z1");
-
-		// Setting header row colors
-		headerRow.setBackground(Colors.totalSeparator);
-		headerRow.setFontColor(Colors.totalSeparatorText);
-
-		ADrows.setValues([LocalizedStrings.columnsName]);
-		ADcolumns.setVerticalAlignment("middle");
-		ADcolumns.setHorizontalAlignment("center");
-
-		activeSS.setFrozenRows(1);
-		activeSS.setActiveSheet(activeSheet);
-
-		// Creating first row
-		addRow();
-
-		// Creating the footer
-		var footerRow1 = activeSheet.getRange("A3:Z3");
-		footerRow1.setBackground("#666");
-		activeSheet.setRowHeight(3, 7);
-
-		// Initially, B2 is the first small row.
-		// By adding rows, the second 'B2' will increase itself and change
-		var monthResultRow = activeSheet.getRange("A4:D4");
-		monthResultRow.setValues([[LocalizedStrings.totalDescriptor, "=SUM($B$2:$B3)", "", ""]]);
-		var chainResultRow = activeSheet.getRange("A5:D5");
-
-		var footerRowRange;
-		var footerRowNumber;
-
-		if (activeSS.getSheets().length == 1) {
-			footerRowNumber = 5;
-			footerRowRange = "A" + footerRowNumber + ":Z" + footerRowNumber;
-		} else {
-			footerRowNumber = 6
-			footerRowRange = "A" + footerRowNumber + ":Z" + footerRowNumber;
-
-			chainResultRow.setValues([[LocalizedStrings.totalWithPastMonthsDescriptor, "=" + getPreviousMonthTotalRange() + "+B4", "", ""]]);
-
-			/*
-			 * inverted conditional rules
-			 * since we are talking about costs and we are assuming to
-			 * all the expenses will be positive
-			 * while all the entrances will be negative. By doing this
-			 * We will see in total rows, a positive excess of money from the past
-			 * month with a green color and a minus sign trailing.
-			 * Vice-versa for money deficit.
-			 */
-
-			var positiveTotalAmount = SpreadsheetApp.newConditionalFormatRule()
-				.whenNumberLessThan(0)
-				.setBackground(Colors.positivePastMonthAmount)
-				.setFontColor(Colors.positivePastMonthAmountText)
-				.setRanges([chainResultRow])
-				.build();
-
-			var negativeTotalAmount = SpreadsheetApp.newConditionalFormatRule()
-				.whenNumberGreaterThan(0)
-				.setBackground(Colors.negativePastMonthAmount)
-				.setFontColor(Colors.negativePastMonthAmountText)
-				.setRanges([chainResultRow])
-				.build();
-
-			var rules = activeSheet.getConditionalFormatRules();
-			rules.push(positiveTotalAmount, negativeTotalAmount);
-			activeSheet.setConditionalFormatRules(rules);
+		if (activeSS.getSheetByName(actualMonth) !== null) {
+			/** DEVELOPMENT ONLY - DISABLE FOR PRODUCTION **/
+			//activeSS.deleteSheet(activeSS.getSheetByName(actualMonth));
+			/** DEVELOPMENT ONLY **/
 		}
 
-		var footerRow2 = activeSheet.getRange(footerRowRange);
-		footerRow2.setBackground(Colors.totalSeparator);
-		activeSheet.setRowHeight(footerRowNumber, 7);
+		// Checking if there is a Sheet with name corresponding to the
+		// one associated with this month name
 
-		activeSheet.getRange("B2:B6").setNumberFormat("€ ##0.00##")
-    }
+		if (activeSS.getSheetByName(actualMonth) === null) {
+			activeSS.insertSheet(actualMonth, activeSS.getNumSheets());
+			var activeSheet = activeSS.getSheetByName(actualMonth);
+
+			// Setting cells
+			activeSheet.setRowHeight(1, 35);
+			activeSheet.setColumnWidths(1, 3, 185);
+			activeSheet.setColumnWidth(4, 200);
+
+			// ADColumns and Rows is the header row A-D
+			// headerRow is the header row A-Z
+
+			var ADcolumns = activeSheet.getRange("A:D");
+			var ADrows = activeSheet.getRange("A1:D1");
+			var headerRow = activeSheet.getRange("A1:Z1");
+
+			// Setting header row colors
+			headerRow.setBackground(Colors.totalSeparator);
+			headerRow.setFontColor(Colors.totalSeparatorText);
+
+			ADrows.setValues([LocalizedStrings.columnsName]);
+			ADcolumns.setVerticalAlignment("middle");
+			ADcolumns.setHorizontalAlignment("center");
+
+			activeSS.setFrozenRows(1);
+			activeSS.setActiveSheet(activeSheet);
+
+			// Creating first row
+			addRow();
+
+			// Creating the footer
+			var footerRow1 = activeSheet.getRange("A3:Z3");
+			footerRow1.setBackground("#666");
+			activeSheet.setRowHeight(3, 7);
+
+			// Initially, B2 is the first small row.
+			// By adding rows, the second 'B2' will increase itself and change
+			var monthResultRow = activeSheet.getRange("A4:D4");
+			monthResultRow.setValues([[LocalizedStrings.totalDescriptor, "=SUM($B$2:$B3)", "", ""]]);
+			var chainResultRow = activeSheet.getRange("A5:D5");
+
+			var footerRowRange;
+			var footerRowNumber;
+
+			if (activeSS.getSheets().length === 1 || !settings.pastMonthTotal) {
+				footerRowNumber = 5;
+				footerRowRange = "A" + footerRowNumber + ":Z" + footerRowNumber;
+			} else {
+				footerRowNumber = 6
+				footerRowRange = "A" + footerRowNumber + ":Z" + footerRowNumber;
+
+				chainResultRow.setValues([[LocalizedStrings.totalWithPastMonthsDescriptor, "=" + getPreviousMonthTotalRange() + "+B4", "", ""]]);
+
+				/*
+				* inverted conditional rules
+				* since we are talking about costs and we are assuming to
+				* all the expenses will be positive
+				* while all the entrances will be negative. By doing this
+				* We will see in total rows, a positive excess of money from the past
+				* month with a green color and a minus sign trailing.
+				* Vice-versa for money deficit.
+				*/
+
+				var positiveTotalAmount = SpreadsheetApp.newConditionalFormatRule()
+					.whenNumberLessThan(0)
+					.setBackground(Colors.positivePastMonthAmount)
+					.setFontColor(Colors.positivePastMonthAmountText)
+					.setRanges([chainResultRow])
+					.build();
+
+				var negativeTotalAmount = SpreadsheetApp.newConditionalFormatRule()
+					.whenNumberGreaterThan(0)
+					.setBackground(Colors.negativePastMonthAmount)
+					.setFontColor(Colors.negativePastMonthAmountText)
+					.setRanges([chainResultRow])
+					.build();
+
+				var rules = activeSheet.getConditionalFormatRules();
+				rules.push(positiveTotalAmount, negativeTotalAmount);
+				activeSheet.setConditionalFormatRules(rules);
+			}
+
+			var footerRow2 = activeSheet.getRange(footerRowRange);
+			footerRow2.setBackground(Colors.totalSeparator);
+			activeSheet.setRowHeight(footerRowNumber, 7);
+
+			activeSheet.getRange("B2:B6").setNumberFormat("€ ##0.00##")
+		}
+	}
 }
 
 /**
@@ -144,7 +180,7 @@ function onOpen() {
  */
 
 function onEdit(event) {
-	if (event.range.getRow() == getLastRowRelative()) {
+	if (event.range.getRow() == getLastRelativeRow()) {
 		var month = getMonthName();
 		addRow(month);
 	}
@@ -163,7 +199,7 @@ function getPreviousMonthTotalRange() {
 	var activeSheet = activeSS.getSheetByName(previousName);
 	var maxRows = activeSheet.getLastRow();
 
-    // e.g. 'December 2018'!B61+B4
+	// e.g. 'December 2018'!B61+B4
 	return "'" + previousName + "'!" + activeSheet.getRange(maxRows, 2).getA1Notation();
 }
 
@@ -174,49 +210,52 @@ function getPreviousMonthTotalRange() {
  */
 
 function getMonthName(position) {
-    position = position || (new Date()).getMonth();
-    var parsedPosition;
-    var month;
-    var year;
+	position = position || (new Date()).getMonth();
+	var parsedPosition;
+	var month;
+	var year;
 
-    // into the months limits
-    if (position < 0) {
-      parsedPosition = LocalizedStrings.monthsFull.length + position;
-      // we need to set the year based on this month index + position (neg. num).
-      // If < 0, we are referring to a previous year month
-      year = (new Date().getMonth() + position) < 0 ? (new Date()).getFullYear() - 1 : (new Date()).getFullYear();
-    } else {
-      // position might be > 11. We want to sanitize it.
-      // if it is greater than 11, we calculate the amount of times
-      // it fits in it, so we can navigate through years
-      parsedPosition = position % 11;
-      var yearsForward = 0;
+	// into the months limits
+	if (position < 0) {
+		parsedPosition = LocalizedStrings.monthsFull.length + position;
+		// we need to set the year based on this month index + position (neg. num).
+		// If < 0, we are referring to a previous year month
+		year = (new Date().getMonth() + position) < 0 ? (new Date()).getFullYear() - 1 : (new Date()).getFullYear();
+	} else {
+		// position might be > 11. We want to sanitize it.
+		// if it is greater than 11, we calculate the amount of times
+		// it fits in it, so we can navigate through years
+		parsedPosition = position % 11;
+		var yearsForward = 0;
 
-      while (position >= LocalizedStrings.monthsFull.length) {
-        position = position - LocalizedStrings.monthsFull.length;
-        yearsForward++;
-      }
+		while (position >= LocalizedStrings.monthsFull.length) {
+			position = position - LocalizedStrings.monthsFull.length;
+			yearsForward++;
+		}
 
-      year = (new Date()).getFullYear() + yearsForward;
-    }
+		year = (new Date()).getFullYear() + yearsForward;
+	}
 
-    month = LocalizedStrings.monthsFull[parsedPosition];
-    return month + " " + year;
+	month = LocalizedStrings.monthsFull[parsedPosition];
+	return month + " " + year;
 }
 
 /**
  * Finds the last row relative to the end (footer total rows)
  */
 
-function getLastRowRelative() {
-	// last row is 2 rows before total
+function getLastRelativeRow() {
+	// last row is 2 before real rows total
 
 	var relative = activeSS.getActiveSheet().getLastRow();
 
-	if (activeSS.getActiveSheet().getLastRow() == 1) {
+	if (activeSS.getActiveSheet().getLastRow() == 1 || !settings.pastMonthTotal) {
 		// this is needed when I'm creating the first row
 		return relative;
 	}
+
+	// Last row - Sheet index: if this is not the first sheet
+	// you will have another row.
 
 	return relative - (activeSS.getActiveSheet().getIndex() == 1 ? 2 : 3);
 }
@@ -241,21 +280,24 @@ function parsedDate(keepAmericanFormat) {
 function addRow() {
 	var activeSheet = activeSS.getActiveSheet();
 
-	var LR = getLastRowRelative(); // Last (relative) Row
-	activeSheet.insertRowAfter(LR);
+	if (settings.excludeSheets && settings.excludeSheets.length && settings.excludeSheets.indexOf(activeSheet.getName()) === -1) {
+		return;
+	}
 
-	var newRow = activeSheet.getRange(LR == 1 ? LR + 1 : LR, 1, 1, activeSheet.getMaxColumns());
+	var lastRow = getLastRelativeRow();
+	activeSheet.insertRowAfter(lastRow);
+
+	var newRow = activeSheet.getRange(lastRow == 1 ? lastRow + 1 : lastRow, 1, 1, activeSheet.getMaxColumns());
 	newRow.setBackground("#FFF");
 	newRow.setVerticalAlignment("middle");
 
-	activeSheet.getRange(LR == 1 ? LR + 1 : LR, 1, 1, activeSheet.getMaxColumns()).setFontColor("#000");
+	activeSheet.getRange(lastRow == 1 ? lastRow + 1 : lastRow, 1, 1, activeSheet.getMaxColumns()).setFontColor("#000");
 
-	// New row references
-	var NR = {
-		date: activeSheet.getRange(LR == 1 ? LR + 1 : LR, 3),
-		notes: activeSheet.getRange(LR == 1 ? LR + 1 : LR, 4)
+	var newRowFields = {
+		third: activeSheet.getRange(lastRow == 1 ? lastRow + 1 : lastRow, 3), // default: date
+		fourth: activeSheet.getRange(lastRow == 1 ? lastRow + 1 : lastRow, 4) // default: notes
 	};
 
-	NR.date.setValue(parsedDate(false));
-	NR.notes.setValue("-"); // Notes DEFAULT TO "-"
+	newRowFields.third.setValue(parsedDate(false));
+	newRowFields.fourth.setValue(settings.fourthColumnDefaultValue.toString() || ""); // default: "-"
 }
