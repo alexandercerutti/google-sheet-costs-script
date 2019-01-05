@@ -27,7 +27,12 @@ At the beginning of the script, some settings are available to be customized.
 `trackMonthly (= true)`, to create a new sheet every month;
 `pastMonthTotal (= true)`, to count the previous month expenses;
 `excludeSheets (= [])`, to exclude some sheets to be included in new row adding on edit. The type is `Array<String>`;
-`fourthColumnDefaultValue (= "-")`, to set the default value for the last column (which is by default used for `notes`)
+
+`columnsDefaultValue (= [null, null, parsedDate.bind(this, false), "-"])`,
+to set a new sheet columns default values;
+`columnsName (= ["Nome", "Costo", "Data", "Note"])`, to set a new sheet columns name;
+`columnsWidth (= [185, 185, 185, 200])`, to set new sheet columns width;
+`rowsHeight (= 35)`, to set new sheet column height;
 
 
 For any further explanation, open a topic in issues. Default language is Italian.

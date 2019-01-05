@@ -21,14 +21,17 @@ var settings = {
 	// will be true
 	pastMonthTotal: true,
 	excludeSheets: [], // strings,
-	fourthColumnDefaultValue: "-"
+	// set false to true to keep american format
+	columnsDefaultValue: [null, null, parsedDate.bind(this, false), "-"],
+	// Expense Name, Cost Amount, Date, Notes
+	columnsName: ["Nome", "Costo", "Data", "Note"], // valid only for new sheets
+	columnsWidth: [185, 185, 185, 200], // valid only for new sheets
+	rowsHeight: 35, // valid only for new sheets
 };
 
 var LocalizedStrings = {
 	monthsFull: ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"],
 	monthsShort: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-	// Expense Name, Cost Amount, Date, Notes
-	columnsName: ["Nome", "Costo", "Data", "Note"],
 	totalDescriptor: "Totale mese",
 	totalWithPastMonthsDescriptor: "Tot. con mesi precedenti",
 };
@@ -86,9 +89,11 @@ function onOpen() {
 			var activeSheet = activeSS.getSheetByName(actualMonth);
 
 			// Setting cells
-			activeSheet.setRowHeight(1, 35);
-			activeSheet.setColumnWidths(1, 3, 185);
-			activeSheet.setColumnWidth(4, 200);
+			activeSheet.setRowHeight(1, settings.rowsHeight);
+
+			for (var i = 1; i < settings.columnsName.length; i++) {
+				activeSheet.setColumnWidth(i, settings.columnsWidth[i - 1]);
+			}
 
 			// ADColumns and Rows is the header row A-D
 			// headerRow is the header row A-Z
@@ -101,7 +106,7 @@ function onOpen() {
 			headerRow.setBackground(Colors.totalSeparator);
 			headerRow.setFontColor(Colors.totalSeparatorText);
 
-			ADrows.setValues([LocalizedStrings.columnsName]);
+			ADrows.setValues([settings.columnsName]);
 			ADcolumns.setVerticalAlignment("middle");
 			ADcolumns.setHorizontalAlignment("center");
 
@@ -185,7 +190,6 @@ function onEdit(event) {
 		addRow(month);
 	}
 }
-
 
 /* Support functions */
 
@@ -293,11 +297,15 @@ function addRow() {
 
 	activeSheet.getRange(lastRow == 1 ? lastRow + 1 : lastRow, 1, 1, activeSheet.getMaxColumns()).setFontColor("#000");
 
-	var newRowFields = {
-		third: activeSheet.getRange(lastRow == 1 ? lastRow + 1 : lastRow, 3), // default: date
-		fourth: activeSheet.getRange(lastRow == 1 ? lastRow + 1 : lastRow, 4) // default: notes
-	};
+	for (var i = 1; i < settings.columnsName.length; i++) {
+		if (settings.columnsDefaultValue[i - 1]) {
+			var columnRange = activeSheet.getRange(lastRow === 1 ? lastRow + 1 : lastRow, i);
 
-	newRowFields.third.setValue(parsedDate(false));
-	newRowFields.fourth.setValue(settings.fourthColumnDefaultValue.toString() || ""); // default: "-"
+			if (typeof settings.columnsDefaultValue[i - 1] === "function") {
+				columnRange.setValue(settings.columnsDefaultValue[i - 1]());
+			} else {
+				columnRange.setValue(settings.columnsDefaultValue[i - 1]);
+			}
+		}
+	}
 }
