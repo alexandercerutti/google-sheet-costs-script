@@ -91,7 +91,7 @@ function onOpen() {
 			// Setting cells
 			activeSheet.setRowHeight(1, settings.rowsHeight);
 
-			for (var i = 1; i < settings.columnsName.length; i++) {
+			for (var i = 1; i <= settings.columnsName.length; i++) {
 				activeSheet.setColumnWidth(i, settings.columnsWidth[i - 1]);
 			}
 
@@ -297,7 +297,7 @@ function addRow() {
 
 	activeSheet.getRange(lastRow == 1 ? lastRow + 1 : lastRow, 1, 1, activeSheet.getMaxColumns()).setFontColor("#000");
 
-	for (var i = 1; i < settings.columnsName.length; i++) {
+	for (var i = 1; i <= settings.columnsName.length; i++) {
 		if (settings.columnsDefaultValue[i - 1]) {
 			var columnRange = activeSheet.getRange(lastRow === 1 ? lastRow + 1 : lastRow, i);
 
