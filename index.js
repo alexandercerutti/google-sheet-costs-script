@@ -76,6 +76,12 @@ function onOpen() {
 		var actualMonth = getMonthName();
 
 		if (activeSS.getSheetByName(actualMonth) !== null) {
+			// This deletes the last month sheet
+			// You can pass to getMonthName() an arbitrary parameter,
+			// a positive number, to create the corresponding sheet
+			// e.g. month == "Jen"; getMonthName(3) == "Apr";
+			// This is useful also for development
+
 			/** DEVELOPMENT ONLY - DISABLE FOR PRODUCTION **/
 			//activeSS.deleteSheet(activeSS.getSheetByName(actualMonth));
 			/** DEVELOPMENT ONLY **/
