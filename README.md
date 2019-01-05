@@ -22,4 +22,24 @@ In November I spent 150€ but still not have received any income yet. So I'll h
 To use it you have to create first a new Google Drive SpreadSheet document. In the toolbar go to `Tools > Script editor`. A new tab will open.
 Create a new script and paste `index.js` script in it.
 
-At the beginning of the script, some settings are available to be customized. For any further explanation, open a topic in issues. Default language is Italian. Hope you enjoy! 😊
+At the beginning of the script, some settings are available to be customized.
+
+`trackMonthly (= true)`, to create a new sheet every month;
+`pastMonthTotal (= true)`, to count the previous month expenses;
+`excludeSheets (= [])`, to exclude some sheets to be included in new row adding on edit. The type is `Array<String>`;
+`fourthColumnDefaultValue (= "-")`, to set the default value for the last column (which is by default used for `notes`)
+
+
+For any further explanation, open a topic in issues. Default language is Italian.
+
+### Development
+
+To work on any improvements of this script, I suggest you to install GAS Typings (Typescript):
+
+```sh
+$ npm install --save @types/google-apps-script
+```
+
+So you will have the latest API reference directly in your editor (better if VSCode or one that supports `DefinitelyTyped`).
+
+Hope you enjoy! 😊
