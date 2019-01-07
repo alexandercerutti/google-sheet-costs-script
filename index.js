@@ -301,7 +301,9 @@ function addRow() {
 	newRow.setBackground("#FFF");
 	newRow.setVerticalAlignment("middle");
 
-	activeSheet.getRange(lastRow == 1 ? lastRow + 1 : lastRow, 1, 1, activeSheet.getMaxColumns()).setFontColor("#000");
+	activeSheet
+		.getRange(lastRow == 1 ? lastRow + 1 : lastRow, 1, 1, activeSheet.getMaxColumns())
+		.setFontColor("#000");
 
 	for (var i = 1; i <= settings.columnsName.length; i++) {
 		if (settings.columnsDefaultValue[i - 1]) {
