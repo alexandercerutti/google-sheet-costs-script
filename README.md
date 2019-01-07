@@ -24,15 +24,16 @@ Create a new script and paste `index.js` script in it.
 
 At the beginning of the script, some settings are available to be customized.
 
-`trackMonthly (= true)`, to create a new sheet every month;
-`pastMonthTotal (= true)`, to count the previous month expenses;
-`excludeSheets (= [])`, to exclude some sheets to be included in new row adding on edit. The type is `Array<String>`;
 
-`columnsDefaultValue (= [null, null, parsedDate.bind(this, false), "-"])`,
-to set a new sheet columns default values;
-`columnsName (= ["Nome", "Costo", "Data", "Note"])`, to set a new sheet columns name;
-`columnsWidth (= [185, 185, 185, 200])`, to set new sheet columns width;
-`rowsHeight (= 35)`, to set new sheet column height;
+| Property | Description | Type | Default Value |
+|----------|-------------|------|---------------|
+| `trackMonthly` | To create a new sheet every month. | Boolean | `true` |
+| `pastMonthTotal` | To count the previous month costs. | Boolean | `true` |
+| `excludeSheets` | To exclude some sheets to be edited on last row editing. | Array\<String> | `[]` |
+| `columnsDefaultValue` | To set a new sheet columns default values. As you see you can include a function to be executed with binded parameters. Use null to exclude a column from default value. | Array\<String> | `[null, null, parsedDate.bind(this, false), "-"]` |
+| `columnsName` | To set a new sheet columns header names. | Array\<String> | `["Nome", "Costo", "Data", "Note"]` |
+| `columnsWidth` | To set new sheet columns width. | Array\<Number> | `[185, 185, 185, 200]` |
+| `rowsHeight` | To set new sheet default rows height. | Number | `35` |
 
 
 For any further explanation, open a topic in issues. Default language is Italian.
