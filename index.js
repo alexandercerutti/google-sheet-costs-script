@@ -227,7 +227,13 @@ function getMonthName(position) {
 
 	// into the months limits
 	if (position < 0) {
-		parsedPosition = LocalizedStrings.monthsFull.length + position;
+		parsedPosition = (new Date()).getMonth() + position;
+
+		if (parsedPosition < 0) {
+			// We need to reset the index to the greatest month if still under 0
+			parsedPosition = LocalizedStrings.monthsFull.length - 1;
+		}
+
 		// we need to set the year based on this month index + position (neg. num).
 		// If < 0, we are referring to a previous year month
 		year = (new Date().getMonth() + position) < 0 ? (new Date()).getFullYear() - 1 : (new Date()).getFullYear();
